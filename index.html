@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>fake-text — fabricated iMessage / tweet / SMS screenshots</title>
+    <meta
+      name="description"
+      content="Generate fabricated iMessage, SMS, and tweet screenshots for memes — clearly-labelled parody props. 100% in your browser, nothing leaves your device."
+    />
+    <link rel="stylesheet" href="./src/styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <h1>fake-text</h1>
+      <nav class="tabs" id="tabs" role="tablist" aria-label="Mockup type">
+        <button type="button" class="tab" data-mode="imessage" role="tab">iMessage</button>
+        <button type="button" class="tab" data-mode="sms" role="tab">SMS</button>
+        <button type="button" class="tab" data-mode="tweet" role="tab">Tweet</button>
+      </nav>
+      <div class="topbar-actions">
+        <label class="theme-toggle">
+          <input type="checkbox" id="theme" />
+          <span>Dark</span>
+        </label>
+        <button type="button" id="png" class="primary">⬇ PNG</button>
+        <button type="button" id="share">🔗 Link</button>
+      </div>
+    </header>
+
+    <div class="layout">
+      <!-- ----------------------------------------------------------------- -->
+      <!-- Editor panel                                                       -->
+      <!-- ----------------------------------------------------------------- -->
+      <aside class="editor" id="editor">
+        <!-- Chat editor (iMessage + SMS share this) -->
+        <section class="edit-pane" id="edit-chat" hidden>
+          <label class="field">
+            <span>Contact name</span>
+            <input type="text" id="chat-contact" maxlength="60" autocomplete="off" />
+          </label>
+          <div class="field-row">
+            <label class="field">
+              <span>Status time</span>
+              <input type="text" id="chat-time" maxlength="12" autocomplete="off" />
+            </label>
+            <label class="field" id="chat-carrier-field">
+              <span>Carrier</span>
+              <input type="text" id="chat-carrier" maxlength="20" autocomplete="off" />
+            </label>
+            <label class="field">
+              <span>Battery %</span>
+              <input type="number" id="chat-battery" min="0" max="100" />
+            </label>
+          </div>
+          <label class="check">
+            <input type="checkbox" id="chat-timestamps" />
+            <span>Show per-message timestamps</span>
+          </label>
+
+          <h2 class="section-title">Messages</h2>
+          <ol class="bubble-list" id="bubble-list"></ol>
+          <div class="add-row">
+            <button type="button" id="add-received">+ Received</button>
+            <button type="button" id="add-sent">+ Sent</button>
+          </div>
+        </section>
+
+        <!-- Tweet editor -->
+        <section class="edit-pane" id="edit-tweet" hidden>
+          <label class="field">
+            <span>Display name</span>
+            <input type="text" id="tw-name" maxlength="60" autocomplete="off" />
+          </label>
+          <label class="field">
+            <span>@handle</span>
+            <input type="text" id="tw-handle" maxlength="30" autocomplete="off" />
+          </label>
+          <label class="check">
+            <input type="checkbox" id="tw-verified" />
+            <span>Verified badge</span>
+          </label>
+          <div class="field-row">
+            <label class="field">
+              <span>Avatar initials</span>
+              <input type="text" id="tw-initials" maxlength="3" autocomplete="off" />
+            </label>
+            <label class="field avatar-upload">
+              <span>Avatar image</span>
+              <input type="file" id="tw-avatar" accept="image/*" />
+            </label>
+            <button type="button" id="tw-avatar-clear" class="mini">clear</button>
+          </div>
+          <label class="field">
+            <span>Tweet text</span>
+            <textarea id="tw-text" rows="4" maxlength="4000"></textarea>
+          </label>
+          <div class="field-row">
+            <label class="field">
+              <span>Time</span>
+              <input type="text" id="tw-time" maxlength="24" autocomplete="off" />
+            </label>
+            <label class="field">
+              <span>Date</span>
+              <input type="text" id="tw-date" maxlength="32" autocomplete="off" />
+            </label>
+          </div>
+          <div class="field-row">
+            <label class="field">
+              <span>Replies</span>
+              <input type="number" id="tw-replies" min="0" />
+            </label>
+            <label class="field">
+              <span>Retweets</span>
+              <input type="number" id="tw-retweets" min="0" />
+            </label>
+            <label class="field">
+              <span>Likes</span>
+              <input type="number" id="tw-likes" min="0" />
+            </label>
+          </div>
+        </section>
+
+        <p class="parody-note">
+          ⚠ For parody / memes — everything here is <strong>clearly fabricated</strong>. These are
+          satire props, not real messages. Don't pass them off as genuine.
+        </p>
+
+        <footer class="self-ref">
+          <a
+            id="source"
+            href="https://github.com/baditaflorin/fake-text"
+            target="_blank"
+            rel="noopener"
+            >source</a
+          >
+          ·
+          <a href="https://www.paypal.com/paypalme/florinbadita" target="_blank" rel="noopener"
+            >tip ♥</a
+          >
+          · <span id="version">vdev</span>
+        </footer>
+      </aside>
+
+      <!-- ----------------------------------------------------------------- -->
+      <!-- Live preview                                                       -->
+      <!-- ----------------------------------------------------------------- -->
+      <main class="stage">
+        <div class="capture" id="capture">
+          <!-- iMessage / SMS phone frame -->
+          <div class="phone" id="phone" hidden>
+            <div class="status-bar">
+              <span class="sb-time" id="sb-time">9:41</span>
+              <span class="sb-carrier" id="sb-carrier">Carrier</span>
+              <span class="sb-right">
+                <span class="sb-signal">●●●●○</span>
+                <span class="sb-battery" id="sb-battery">82%</span>
+                <span class="sb-batt-icon" id="sb-batt-icon"></span>
+              </span>
+            </div>
+            <div class="chat-header">
+              <div class="chat-back">‹</div>
+              <div class="chat-contact">
+                <div class="chat-avatar" id="chat-avatar">M</div>
+                <div class="chat-name" id="chat-name">Mom</div>
+              </div>
+              <div class="chat-video">⌕</div>
+            </div>
+            <div class="messages" id="messages"></div>
+            <div class="input-bar">
+              <span class="input-pill" id="input-pill">iMessage</span>
+            </div>
+          </div>
+
+          <!-- Tweet card -->
+          <div class="tweet" id="tweet-card" hidden>
+            <div class="tw-head">
+              <div class="tw-avatar" id="tw-avatar-view">FB</div>
+              <div class="tw-id">
+                <div class="tw-name-row">
+                  <span class="tw-name" id="tw-name-view">Florin</span>
+                  <span class="tw-badge" id="tw-badge" aria-label="Verified">✓</span>
+                </div>
+                <div class="tw-handle" id="tw-handle-view">@baditaflorin</div>
+              </div>
+              <div class="tw-logo" aria-hidden="true">𝕏</div>
+            </div>
+            <div class="tw-text" id="tw-text-view"></div>
+            <div class="tw-meta" id="tw-meta-view"></div>
+            <div class="tw-stats" id="tw-stats-view"></div>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+    <script type="module" src="./src/main.ts"></script>
+  </body>
+</html>
