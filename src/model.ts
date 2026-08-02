@@ -56,6 +56,15 @@ export type AppState = {
   tweet: TweetState;
 };
 
+/**
+ * Max length for free-form message/tweet body text — enforced both when
+ * decoding a shared link (sanitizeBubbles / sanitizeTweet below) and by the
+ * editor's `<textarea maxlength>` (see main.ts), so a pasted wall of text
+ * can't reach the pathological sizes that blow up bubble layout / stall PNG
+ * export (see .bubble's CSS comment for the layout half of this).
+ */
+export const MAX_TEXT_LEN = 4000;
+
 // ---- Defaults -------------------------------------------------------------
 
 let idCounter = 0;
@@ -270,7 +279,7 @@ function sanitizeBubbles(raw: unknown, fallback: Bubble[]): Bubble[] {
   for (const item of raw) {
     if (!isRecord(item)) continue;
     const side: Side = item.side === "sent" ? "sent" : "received";
-    const text = str(item.text, "", 4000);
+    const text = str(item.text, "", MAX_TEXT_LEN);
     const id = str(item.id, makeId(), 64) || makeId();
     const bubble: Bubble = { id, side, text };
     if (typeof item.time === "string" && item.time) bubble.time = item.time.slice(0, 24);
@@ -287,7 +296,7 @@ function sanitizeTweet(raw: Record<string, unknown>, fallback: TweetState): Twee
     avatarIsImage:
       typeof raw.avatarIsImage === "boolean" ? raw.avatarIsImage : fallback.avatarIsImage,
     verified: typeof raw.verified === "boolean" ? raw.verified : fallback.verified,
-    text: str(raw.text, fallback.text, 4000),
+    text: str(raw.text, fallback.text, MAX_TEXT_LEN),
     time: str(raw.time, fallback.time, 24),
     date: str(raw.date, fallback.date, 32),
     replies: clampNum(raw.replies, 0, 1e12, fallback.replies),

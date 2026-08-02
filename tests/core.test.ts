@@ -14,6 +14,7 @@ import {
   formatClock,
   formatClock12,
   formatDate,
+  MAX_TEXT_LEN,
 } from "../src/model";
 
 function b(id: string, side: "sent" | "received", text: string): Bubble {
@@ -180,6 +181,32 @@ describe("encodeState / decodeState", () => {
     expect(decoded.chat.bubbles[0]!.text).toBe(""); // non-string text → ""
     expect(decoded.tweet.likes).toBe(def.tweet.likes); // bad number → default
     expect(decoded.tweet.handle).toBe("stripme"); // leading @ stripped
+  });
+
+  // Regression test for a real bug: a single unbroken run of characters (a
+  // long URL, hashtag, or base64 blob — no whitespace for the layout to
+  // break on) in a bubble or tweet body blew the rendered bubble out to a
+  // multi-million-pixel-wide flex item (CSS min-content sizing ignores
+  // `word-wrap: break-word`), silently clipped by the phone frame's
+  // `overflow: hidden` in both the live preview and the exported PNG — the
+  // text just vanished past ~380px with no wrapping and no indication
+  // anything was cut off. The CSS fix (min-width: 0 + overflow-wrap:
+  // anywhere on .bubble/.msg/.tw-text) isn't exercised by this DOM-free
+  // suite, but the length cap that bounds how bad it can get is enforced
+  // right here at the data layer — a shared-link payload can't smuggle in
+  // more than MAX_TEXT_LEN characters of unbroken body text no matter what
+  // the sender puts in the hash.
+  it("clamps oversized bubble/tweet text to MAX_TEXT_LEN on decode", () => {
+    const hugeWord = "A".repeat(MAX_TEXT_LEN * 3); // no whitespace to wrap on
+    const payload = btoaSafe(
+      JSON.stringify({
+        chat: { bubbles: [{ side: "sent", text: hugeWord }] },
+        tweet: { text: hugeWord },
+      }),
+    );
+    const decoded = decodeState("#" + payload);
+    expect(decoded.chat.bubbles[0]!.text).toHaveLength(MAX_TEXT_LEN);
+    expect(decoded.tweet.text).toHaveLength(MAX_TEXT_LEN);
   });
 });
 

@@ -482,6 +482,14 @@ input[type="file"] {
   display: flex;
   flex-direction: column;
   max-width: 75%;
+  /* Flex items default to min-width:auto (their content's min-content size),
+     which lets an unbroken run of characters (a long URL, hashtag, base64
+     blob, …) blow the bubble out to its full intrinsic width (millions of
+     px), ignoring max-width entirely. The phone frame's overflow:hidden then
+     silently clips it — the text just vanishes past ~380px instead of
+     wrapping, in both the live preview and the exported PNG. min-width:0
+     lets the item actually shrink so overflow-wrap below can do its job. */
+  min-width: 0;
 }
 
 .msg.sent {
@@ -503,7 +511,12 @@ input[type="file"] {
   border-radius: 1.1rem;
   font-size: 0.92rem;
   line-height: 1.3;
-  word-wrap: break-word;
+  /* overflow-wrap: anywhere (unlike break-word) is allowed to affect
+     min-content sizing, so a single unbroken run of characters can't force
+     this flex item wider than its container — see .msg's min-width: 0. */
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  min-width: 0;
   white-space: pre-wrap;
   position: relative;
 }
@@ -649,7 +662,8 @@ input[type="file"] {
   font-size: 1.32rem;
   line-height: 1.4;
   white-space: pre-wrap;
-  word-wrap: break-word;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .tw-meta {
