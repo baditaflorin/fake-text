@@ -12,6 +12,7 @@ import {
   encodeState,
   decodeState,
   formatCount,
+  MAX_TEXT_LEN,
 } from "./model";
 
 // ---- DOM helpers ----------------------------------------------------------
@@ -135,10 +136,14 @@ function renderBubbleEditor(): void {
 
     const ta = document.createElement("textarea");
     ta.rows = 2;
+    ta.maxLength = MAX_TEXT_LEN;
     ta.value = bubble.text;
     ta.placeholder = "message text…";
     ta.addEventListener("input", () => {
-      state.chat.bubbles = updateBubble(state.chat.bubbles, bubble.id, { text: ta.value });
+      // Belt-and-suspenders: `maxLength` stops normal typing/paste, but a
+      // programmatic value assignment can bypass it, so clamp here too.
+      const text = ta.value.length > MAX_TEXT_LEN ? ta.value.slice(0, MAX_TEXT_LEN) : ta.value;
+      state.chat.bubbles = updateBubble(state.chat.bubbles, bubble.id, { text });
       // Light commit: update preview + hash without rebuilding the editor list
       // (keeps focus/caret in the textarea while typing).
       render();
